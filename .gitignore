@@ -3,3 +3,5 @@ node_modules/
 CLAUDE.local.md
 .claude/
 Assignment.pdf
+dist/
+*.tsbuildinfo
