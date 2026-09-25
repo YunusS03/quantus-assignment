@@ -1,0 +1,34 @@
+services:
+  db:
+    image: postgres:17
+    environment:
+      # Local development credentials only, never used outside this machine.
+      POSTGRES_USER: quantus
+      POSTGRES_PASSWORD: quantus
+      POSTGRES_DB: quantus
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U quantus -d quantus"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build: ./api
+    ports:
+      - "3000:3000"
+    depends_on:
+      # Wait until Postgres accepts connections, not just until its container starts.
+      db:
+        condition: service_healthy
+
+  web:
+    build: ./web
+    ports:
+      - "8080:80"
+    depends_on:
+      - api
+
+volumes:
+  db-data:
