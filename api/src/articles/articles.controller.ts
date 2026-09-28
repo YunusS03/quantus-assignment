@@ -9,13 +9,17 @@ import {
   Patch,
   Post,
 } from '@nestjs/common';
+import { ObjectsService } from '../objects/objects.service.js';
 import { ArticlesService } from './articles.service.js';
 import { CreateArticleDto } from './dto/create-article.dto.js';
 import { UpdateArticleDto } from './dto/update-article.dto.js';
 
 @Controller('articles')
 export class ArticlesController {
-  constructor(private readonly articlesService: ArticlesService) {}
+  constructor(
+    private readonly articlesService: ArticlesService,
+    private readonly objectsService: ObjectsService,
+  ) {}
 
   @Get()
   findAll() {
@@ -25,6 +29,11 @@ export class ArticlesController {
   @Get(':id')
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.articlesService.findOne(id);
+  }
+
+  @Get(':id/objects')
+  findObjects(@Param('id', ParseIntPipe) id: number) {
+    return this.objectsService.findForArticle(id);
   }
 
   @Post()
