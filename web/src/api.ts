@@ -35,6 +35,12 @@ export interface ArticleObjects {
   total: number
 }
 
+export interface Summary {
+  currency: string
+  articles: { id: number; code: string; title: string; subtotal: number }[]
+  grandTotal: number
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`${API_URL}${path}`, init).catch(() => {
     throw new Error(`Cannot reach the API at ${API_URL}. Is docker compose running?`)
@@ -49,6 +55,10 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
 export function getArticles() {
   return request<Article[]>('/articles')
+}
+
+export function getSummary() {
+  return request<Summary>('/summary')
 }
 
 export function getArticleObjects(id: string) {
