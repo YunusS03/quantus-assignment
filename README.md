@@ -22,7 +22,30 @@ _To be filled in._
 
 ## 3. Data model & why
 
-_To be filled in._
+```mermaid
+erDiagram
+    Article |o--o{ Article : "parent of"
+    Article ||--o{ DrawingObject : "contains"
+    Article {
+        int id PK
+        string code UK "e.g. 20.11.10."
+        string title
+        string description "HTML text"
+        int parentId FK "null = top level, indexed"
+    }
+    DrawingObject {
+        string id PK "UUID from the drawing"
+        string name
+        string type "e.g. Wall"
+        Unit unit "M, M2, M3, KG, PIECE"
+        decimal unitPrice "12,2"
+        decimal quantity "12,3, mocked"
+        int articleId FK "required, indexed"
+    }
+```
+
+- **`unit` is an enum:** we own this short list, and code depends on each value (every unit is measured differently from the drawing). The database rejects unknown units, and adding one is a migration plus code.
+- **`type` is a plain string:** object types (Wall, Door, …) come from Vectorworks, not from us. An enum would reject real objects from the drawing just because their type wasn't known in advance.
 
 ## 4. Decisions
 
@@ -31,14 +54,18 @@ _To be filled in._
 ## 5. Assumptions
 
 - The Postgres credentials in `compose.yaml` are local development values, so the project runs from a clean checkout without creating a `.env` file first.
+- The article tree is stored in `parentId`, and `code` must agree with it: a child's code is its parent's code plus one group (`20.` → `20.11.`), and a top-level code is a single group. Otherwise the two could contradict each other, for example `30.11.` under `20.`.
+- Code groups use a fixed two-digit width (`20.02.`, not `20.2.`), so sorting codes as text gives the real order.
+- The PDF lists units as "m, m², m³, kg, piece, …", so more units may come. They are an enum that a migration can extend.
 
 ## 6. Questions for imagineY
 
-_To be filled in._
+- Can an object exist without an article, for example when no criteria rule matches it yet? This project requires an article.
+- Can one object match the criteria of several articles? This project allows exactly one article per object.
 
 ## 7. Future improvements
 
-_To be filled in._
+- With multiple projects, the same drawing UUID could appear twice, so an object's key would become (project, UUID).
 
 ## 8. Time spent
 
