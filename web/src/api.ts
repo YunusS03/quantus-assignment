@@ -26,6 +26,7 @@ export interface ArticleObject {
   unitPrice: number
   quantity: number
   lineTotal: number
+  articleId: number
 }
 
 export interface ArticleObjects {
@@ -61,8 +62,8 @@ export function getSummary() {
   return request<Summary>('/summary')
 }
 
-export function getArticleObjects(id: string) {
-  return request<ArticleObjects>(`/articles/${id}/objects`)
+export function getArticleObjects(id: string, includeSubArticles: boolean) {
+  return request<ArticleObjects>(`/articles/${id}/objects?includeSubArticles=${includeSubArticles}`)
 }
 
 export function createArticle(article: NewArticle) {

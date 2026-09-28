@@ -13,7 +13,7 @@ const error = ref('')
 onMounted(async () => {
   try {
     const [objectsData, articleList] = await Promise.all([
-      getArticleObjects(route.params.id as string),
+      getArticleObjects(route.params.id as string, true),
       getArticles(),
     ])
     data.value = objectsData
@@ -41,6 +41,10 @@ const ancestors = computed(() => {
 
 const unitLabels: Record<Unit, string> = { M: 'm', M2: 'm²', M3: 'm³', KG: 'kg', PIECE: 'pc' }
 const quantityFormat = new Intl.NumberFormat('en', { maximumFractionDigits: 3 })
+
+function codeOf(articleId: number) {
+  return articles.value.find((a) => a.id === articleId)?.code
+}
 
 function money(value: number) {
   return formatMoney(value, data.value!.currency)
@@ -79,19 +83,23 @@ function money(value: number) {
       </ul>
     </section>
 
-    <h2 class="mb-2 text-lg font-semibold">Objects</h2>
+    <h2 class="mb-2 text-lg font-semibold">
+      {{ children.length > 0 ? 'All objects, including sub-articles' : 'Objects' }}
+    </h2>
     <div
       v-if="data.objects.length === 0"
       class="rounded-xl border border-dashed border-line bg-white px-6 py-8 text-center text-muted"
     >
-      <p class="font-semibold text-ink">No objects directly in this article.</p>
-      <p v-if="children.length > 0" class="mt-1">Open a sub-article above to see its objects.</p>
+      <p class="font-semibold text-ink">
+        No objects in this article{{ children.length > 0 ? ' or its sub-articles' : '' }}.
+      </p>
     </div>
     <div v-else class="overflow-x-auto rounded-xl border border-line bg-white">
       <!-- min-w: on small screens the table scrolls sideways instead of squeezing the names. -->
       <table class="w-full min-w-[44rem] text-[0.9375rem]">
         <thead class="border-b border-line bg-surface-alt text-[0.8125rem] text-muted">
           <tr>
+            <th v-if="children.length > 0" scope="col" class="px-3 py-2.5 text-left font-semibold">Article</th>
             <th scope="col" class="px-3 py-2.5 text-left font-semibold">Object</th>
             <th scope="col" class="px-3 py-2.5 text-left font-semibold">Type</th>
             <th scope="col" class="px-3 py-2.5 text-right font-semibold">Quantity</th>
@@ -102,6 +110,9 @@ function money(value: number) {
         </thead>
         <tbody class="divide-y divide-line">
           <tr v-for="object in data.objects" :key="object.id" class="hover:bg-surface-alt">
+            <td v-if="children.length > 0" class="px-3 py-2.5 whitespace-nowrap tabular-nums">
+              <RouterLink :to="`/articles/${object.articleId}`">{{ codeOf(object.articleId) }}</RouterLink>
+            </td>
             <td class="px-3 py-2.5">{{ object.name }}</td>
             <td class="px-3 py-2.5 text-muted">{{ object.type }}</td>
             <td class="px-3 py-2.5 text-right tabular-nums">{{ quantityFormat.format(object.quantity) }}</td>
@@ -112,15 +123,18 @@ function money(value: number) {
         </tbody>
         <tfoot class="border-t-2 border-ink font-bold">
           <tr>
-            <th scope="row" colspan="5" class="px-3 py-2.5 text-left">Total of objects in this article</th>
+            <th scope="row" :colspan="children.length > 0 ? 6 : 5" class="px-3 py-2.5 text-left">
+              {{ children.length > 0 ? 'Total including sub-articles' : 'Total of objects in this article' }}
+            </th>
             <td class="px-3 py-2.5 text-right whitespace-nowrap tabular-nums">{{ money(data.total) }}</td>
           </tr>
         </tfoot>
       </table>
     </div>
     <p v-if="data.objects.length > 0" class="mt-1.5 text-[0.8125rem] text-muted">
-      Objects of child articles are not included. The total is calculated from unrounded line totals,
-      so it can differ by a cent from the sum of the rows shown.
+      <template v-if="children.length > 0">Includes the objects of every article below this one. </template>
+      The total is calculated from unrounded line totals, so it can differ by a cent from the sum of the
+      rows shown.
     </p>
   </template>
 </template>
