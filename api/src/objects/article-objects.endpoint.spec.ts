@@ -1,0 +1,59 @@
+import { INestApplication } from '@nestjs/common';
+import { Test } from '@nestjs/testing';
+import request from 'supertest';
+import { ArticlesModule } from '../articles/articles.module.js';
+import { Prisma } from '../generated/prisma/client.js';
+import { PrismaService } from '../prisma/prisma.service.js';
+
+function object(id: string, quantity: string, unitPrice: string) {
+  return {
+    id,
+    name: `Wall ${id}`,
+    type: 'Wall',
+    unit: 'M2',
+    quantity: new Prisma.Decimal(quantity),
+    unitPrice: new Prisma.Decimal(unitPrice),
+    articleId: 7,
+  };
+}
+
+// Real controller and services; only the database is replaced by fixed data.
+const fakePrisma = {
+  article: {
+    findUnique: async ({ where }: { where: { id: number } }) =>
+      where.id === 7 ? { id: 7, code: '20.11.10.', title: 'Materials - mortar' } : null,
+  },
+  drawingObject: {
+    findMany: async () => [object('a', '0.5', '2.25'), object('b', '0.5', '2.25')],
+  },
+};
+
+describe('GET /articles/:id/objects', () => {
+  let app: INestApplication;
+
+  beforeAll(async () => {
+    const moduleRef = await Test.createTestingModule({ imports: [ArticlesModule] })
+      .overrideProvider(PrismaService)
+      .useValue(fakePrisma)
+      .compile();
+    app = moduleRef.createNestApplication();
+    await app.init();
+  });
+
+  afterAll(async () => {
+    await app.close();
+  });
+
+  it('returns each line total and the article total from unrounded values', async () => {
+    const response = await request(app.getHttpServer()).get('/articles/7/objects').expect(200);
+
+    expect(response.body.currency).toBe('EUR');
+    expect(response.body.objects.map((o: { lineTotal: number }) => o.lineTotal)).toEqual([1.13, 1.13]);
+    // 1.125 + 1.125 = 2.25; adding the rounded lines would give 2.26.
+    expect(response.body.total).toBe(2.25);
+  });
+
+  it('returns 404 for an unknown article', async () => {
+    await request(app.getHttpServer()).get('/articles/99/objects').expect(404);
+  });
+});
