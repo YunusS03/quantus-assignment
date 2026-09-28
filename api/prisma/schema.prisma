@@ -1,0 +1,46 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Article {
+  id          Int             @id @default(autoincrement())
+  code        String          @unique
+  title       String
+  description String
+  // null = top-level article
+  parentId    Int?
+  // Restrict: deleting a parent must fail instead of silently turning its children into top-level articles.
+  parent      Article?        @relation("ArticleTree", fields: [parentId], references: [id], onDelete: Restrict)
+  children    Article[]       @relation("ArticleTree")
+  objects     DrawingObject[]
+
+  @@index([parentId])
+}
+
+enum Unit {
+  M
+  M2
+  M3
+  KG
+  PIECE
+}
+
+model DrawingObject {
+  // The UUID comes from the drawing, so the database does not generate it.
+  id        String  @id @db.Uuid
+  name      String
+  type      String
+  unit      Unit
+  unitPrice Decimal @db.Decimal(12, 2)
+  // Mocked: in Quantus this would be measured from the drawing.
+  quantity  Decimal @db.Decimal(12, 3)
+  articleId Int
+  article   Article @relation(fields: [articleId], references: [id], onDelete: Restrict)
+
+  @@index([articleId])
+}

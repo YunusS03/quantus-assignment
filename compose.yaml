@@ -18,6 +18,8 @@ services:
     build: ./api
     ports:
       - "3000:3000"
+    environment:
+      DATABASE_URL: postgresql://quantus:quantus@db:5432/quantus
     depends_on:
       # Wait until Postgres accepts connections, not just until its container starts.
       db:
