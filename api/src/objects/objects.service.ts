@@ -4,6 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { subtreeIds } from '../articles/article-tree.js';
 import { CURRENCY } from '../currency.js';
 import { DrawingObject, Prisma } from '../generated/prisma/client.js';
 import { toMoney } from '../money.js';
@@ -50,16 +51,21 @@ export class ObjectsService {
     await this.prisma.drawingObject.delete({ where: { id } });
   }
 
-  // The objects page: only the article's own objects, not those of its child articles
-  // (the rolled-up totals are what /summary is for).
-  async findForArticle(articleId: number) {
+  // The objects page: by default only the article's own objects; with includeSubArticles
+  // also those of every article below it, so the total matches its rolled-up subtotal.
+  async findForArticle(articleId: number, includeSubArticles = false) {
     const article = await this.prisma.article.findUnique({ where: { id: articleId } });
     if (!article) {
       throw new NotFoundException(`Article ${articleId} not found`);
     }
+    let articleIds = [articleId];
+    if (includeSubArticles) {
+      const allArticles = await this.prisma.article.findMany({ select: { id: true, parentId: true } });
+      articleIds = subtreeIds(allArticles, articleId);
+    }
     const objects = await this.prisma.drawingObject.findMany({
-      where: { articleId },
-      orderBy: { name: 'asc' },
+      where: { articleId: { in: articleIds } },
+      orderBy: [{ article: { code: 'asc' } }, { name: 'asc' }],
     });
 
     // Sum unrounded values; round only for output.
