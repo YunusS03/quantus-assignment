@@ -1,31 +1,59 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
-import { getArticleObjects, type ArticleObjects, type Unit } from '@/api'
+import { getArticleObjects, getArticles, type Article, type ArticleObjects, type Unit } from '@/api'
+import { formatMoney } from '@/format'
 
 const route = useRoute()
+const articleId = Number(route.params.id)
 const data = ref<ArticleObjects>()
+const articles = ref<Article[]>([])
 const error = ref('')
 
 onMounted(async () => {
   try {
-    data.value = await getArticleObjects(route.params.id as string)
+    const [objectsData, articleList] = await Promise.all([
+      getArticleObjects(route.params.id as string),
+      getArticles(),
+    ])
+    data.value = objectsData
+    articles.value = articleList
   } catch (e) {
     error.value = (e as Error).message
   }
+})
+
+// Articles are like folders: show the sub-articles one level down.
+const children = computed(() => articles.value.filter((a) => a.parentId === articleId))
+
+// Walk up the parent chain for the breadcrumb, e.g. 20. / 20.12. / 20.12.10.
+const ancestors = computed(() => {
+  const chain: Article[] = []
+  let parentId = articles.value.find((a) => a.id === articleId)?.parentId ?? null
+  while (parentId !== null) {
+    const parent = articles.value.find((a) => a.id === parentId)
+    if (!parent) break
+    chain.unshift(parent)
+    parentId = parent.parentId
+  }
+  return chain
 })
 
 const unitLabels: Record<Unit, string> = { M: 'm', M2: 'm²', M3: 'm³', KG: 'kg', PIECE: 'pc' }
 const quantityFormat = new Intl.NumberFormat('en', { maximumFractionDigits: 3 })
 
 function money(value: number) {
-  return new Intl.NumberFormat('en', { style: 'currency', currency: data.value!.currency }).format(value)
+  return formatMoney(value, data.value!.currency)
 }
 </script>
 
 <template>
   <nav class="mb-2 text-sm text-muted" aria-label="Breadcrumb">
-    <RouterLink to="/">Articles</RouterLink> / {{ data?.article.code ?? '…' }}
+    <RouterLink to="/">Articles</RouterLink> /
+    <template v-for="ancestor in ancestors" :key="ancestor.id">
+      <RouterLink :to="`/articles/${ancestor.id}`">{{ ancestor.code }}</RouterLink> /
+    </template>
+    {{ data?.article.code ?? '…' }}
   </nav>
 
   <p
@@ -41,12 +69,23 @@ function money(value: number) {
       <span class="text-muted tabular-nums">{{ data.article.code }}</span> {{ data.article.title }}
     </h1>
 
+    <section v-if="children.length > 0" class="mb-8">
+      <h2 class="mb-2 text-lg font-semibold">Sub-articles</h2>
+      <ul class="divide-y divide-line rounded-xl border border-line bg-white">
+        <li v-for="child in children" :key="child.id" class="flex gap-4 px-3 py-2.5">
+          <span class="w-28 shrink-0 text-muted tabular-nums">{{ child.code }}</span>
+          <RouterLink :to="`/articles/${child.id}`">{{ child.title }}</RouterLink>
+        </li>
+      </ul>
+    </section>
+
+    <h2 class="mb-2 text-lg font-semibold">Objects</h2>
     <div
       v-if="data.objects.length === 0"
       class="rounded-xl border border-dashed border-line bg-white px-6 py-8 text-center text-muted"
     >
-      <p class="font-semibold text-ink">No objects in this article.</p>
-      <p class="mt-1">Objects assigned to its child articles are listed on their own pages.</p>
+      <p class="font-semibold text-ink">No objects directly in this article.</p>
+      <p v-if="children.length > 0" class="mt-1">Open a sub-article above to see its objects.</p>
     </div>
     <div v-else class="overflow-x-auto rounded-xl border border-line bg-white">
       <!-- min-w: on small screens the table scrolls sideways instead of squeezing the names. -->

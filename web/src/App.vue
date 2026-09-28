@@ -8,6 +8,7 @@ import { RouterLink, RouterView } from 'vue-router'
     <span class="text-sm text-muted">Bill of quantities</span>
   </header>
   <main class="mx-auto max-w-5xl px-4 pt-5 pb-12 sm:px-6 sm:pt-8 sm:pb-16">
-    <RouterView />
+    <!-- The key remounts the page on every URL, so /articles/1 → /articles/2 loads new data. -->
+    <RouterView :key="$route.fullPath" />
   </main>
 </template>
