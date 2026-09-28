@@ -3,6 +3,7 @@ import { Test } from '@nestjs/testing';
 import request from 'supertest';
 import { ArticlesModule } from '../articles/articles.module.js';
 import { Prisma } from '../generated/prisma/client.js';
+import { configureApp } from '../configure-app.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 
 function object(id: string, articleId: number, quantity: string, unitPrice: string) {
@@ -26,14 +27,9 @@ const objects = [object('a', 7, '0.5', '2.25'), object('b', 7, '0.5', '2.25'), o
 
 // Real controller and services; only the database is replaced by fixed data.
 const fakePrisma = {
-  article: {
-    findUnique: async ({ where }: { where: { id: number } }) => articles.find((a) => a.id === where.id) ?? null,
-    findMany: async () => articles,
-  },
-  drawingObject: {
-    findMany: async ({ where }: { where: { articleId: { in: number[] } } }) =>
-      objects.filter((o) => where.articleId.in.includes(o.articleId)),
-  },
+  $transaction: (queries: Promise<unknown>[]) => Promise.all(queries),
+  article: { findMany: async () => articles },
+  drawingObject: { findMany: async () => objects },
 };
 
 describe('GET /articles/:id/objects', () => {
@@ -45,6 +41,7 @@ describe('GET /articles/:id/objects', () => {
       .useValue(fakePrisma)
       .compile();
     app = moduleRef.createNestApplication();
+    configureApp(app);
     await app.init();
   });
 

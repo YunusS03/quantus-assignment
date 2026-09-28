@@ -9,6 +9,7 @@ import { CURRENCY } from '../currency.js';
 import { DrawingObject, Prisma } from '../generated/prisma/client.js';
 import { toMoney } from '../money.js';
 import { PrismaService } from '../prisma/prisma.service.js';
+import { lineTotal, rollUpTotals } from '../summary/roll-up-totals.js';
 import { CreateObjectDto } from './dto/create-object.dto.js';
 import { UpdateObjectDto } from './dto/update-object.dto.js';
 
@@ -54,33 +55,29 @@ export class ObjectsService {
   // The objects page: by default only the article's own objects; with includeSubArticles
   // also those of every article below it, so the total matches its rolled-up subtotal.
   async findForArticle(articleId: number, includeSubArticles = false) {
-    const article = await this.prisma.article.findUnique({ where: { id: articleId } });
+    // One snapshot of all articles and objects, like /summary, so the page and the
+    // summary are calculated from the same data in the same way.
+    const [articles, allObjects] = await this.prisma.$transaction(
+      [
+        this.prisma.article.findMany({ select: { id: true, code: true, title: true, parentId: true } }),
+        this.prisma.drawingObject.findMany({ orderBy: [{ article: { code: 'asc' } }, { name: 'asc' }] }),
+      ],
+      { isolationLevel: Prisma.TransactionIsolationLevel.RepeatableRead },
+    );
+    const article = articles.find((a) => a.id === articleId);
     if (!article) {
       throw new NotFoundException(`Article ${articleId} not found`);
     }
-    let articleIds = [articleId];
-    if (includeSubArticles) {
-      const allArticles = await this.prisma.article.findMany({ select: { id: true, parentId: true } });
-      articleIds = subtreeIds(allArticles, articleId);
-    }
-    const objects = await this.prisma.drawingObject.findMany({
-      where: { articleId: { in: articleIds } },
-      orderBy: [{ article: { code: 'asc' } }, { name: 'asc' }],
-    });
 
-    // Sum unrounded values; round only for output.
-    let total = new Prisma.Decimal(0);
-    const rows = objects.map((object) => {
-      const lineTotal = object.quantity.mul(object.unitPrice);
-      total = total.add(lineTotal);
-      return { ...toResponse(object), lineTotal: toMoney(lineTotal) };
-    });
+    const articleIds = includeSubArticles ? subtreeIds(articles, articleId) : [articleId];
+    const objects = allObjects.filter((object) => articleIds.includes(object.articleId));
+    const totals = rollUpTotals(articles, objects);
 
     return {
       article: { id: article.id, code: article.code, title: article.title },
       currency: CURRENCY,
-      objects: rows,
-      total: toMoney(total),
+      objects: objects.map((object) => ({ ...toResponse(object), lineTotal: toMoney(lineTotal(object)) })),
+      total: toMoney(totals.get(articleId)!),
     };
   }
 

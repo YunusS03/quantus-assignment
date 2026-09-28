@@ -5,7 +5,6 @@ import {
   Get,
   HttpCode,
   Param,
-  ParseBoolPipe,
   ParseIntPipe,
   Patch,
   Post,
@@ -13,6 +12,7 @@ import {
 } from '@nestjs/common';
 import { ObjectsService } from '../objects/objects.service.js';
 import { ArticlesService } from './articles.service.js';
+import { ArticleObjectsQueryDto } from './dto/article-objects-query.dto.js';
 import { CreateArticleDto } from './dto/create-article.dto.js';
 import { UpdateArticleDto } from './dto/update-article.dto.js';
 
@@ -36,9 +36,9 @@ export class ArticlesController {
   @Get(':id/objects')
   findObjects(
     @Param('id', ParseIntPipe) id: number,
-    @Query('includeSubArticles', new ParseBoolPipe({ optional: true })) includeSubArticles?: boolean,
+    @Query() query: ArticleObjectsQueryDto,
   ) {
-    return this.objectsService.findForArticle(id, includeSubArticles);
+    return this.objectsService.findForArticle(id, query.includeSubArticles === 'true');
   }
 
   @Post()

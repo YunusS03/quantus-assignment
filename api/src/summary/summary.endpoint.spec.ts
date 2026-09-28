@@ -2,6 +2,7 @@ import { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import request from 'supertest';
 import { Prisma } from '../generated/prisma/client.js';
+import { configureApp } from '../configure-app.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { SummaryModule } from './summary.module.js';
 
@@ -32,6 +33,7 @@ describe('GET /summary', () => {
       .useValue(fakePrisma)
       .compile();
     app = moduleRef.createNestApplication();
+    configureApp(app);
     await app.init();
   });
 
