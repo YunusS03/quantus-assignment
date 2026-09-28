@@ -38,7 +38,6 @@ export class ArticlesService {
 
   async update(id: number, dto: UpdateArticleDto) {
     const article = await this.findOne(id);
-    // Check the article as it will look after the update.
     const code = dto.code ?? article.code;
     const parentId = dto.parentId === undefined ? article.parentId : dto.parentId;
 

@@ -2,7 +2,7 @@ import { IsEnum, IsInt, IsNotEmpty, IsNumber, IsString, IsUUID, Max, Min } from 
 import { Unit } from '../../generated/prisma/client.js';
 
 export class CreateObjectDto {
-  // The UUID comes from the drawing, so the client sends it instead of the database making one.
+  // The UUID comes from the drawing, not from the database.
   @IsUUID('all')
   id: string;
 

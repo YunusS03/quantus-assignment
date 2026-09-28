@@ -22,7 +22,6 @@ describe('codeFitsParent', () => {
     expect(codeFitsParent('20.11.', null)).toBe(false);
   });
 
-  // These two show why no separate cycle check is needed.
   it('rejects an article as its own parent', () => {
     expect(codeFitsParent('20.', '20.')).toBe(false);
   });

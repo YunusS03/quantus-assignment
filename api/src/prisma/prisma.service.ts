@@ -2,8 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../generated/prisma/client.js';
 
-// One shared database client that Nest injects wherever it is needed.
-// Prisma 7 talks to Postgres through a driver adapter (the `pg` library).
+// Prisma 7 connects to Postgres through a driver adapter.
 @Injectable()
 export class PrismaService extends PrismaClient {
   constructor() {

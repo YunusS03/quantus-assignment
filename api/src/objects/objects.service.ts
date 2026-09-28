@@ -62,7 +62,7 @@ export class ObjectsService {
       orderBy: { name: 'asc' },
     });
 
-    // Sum the unrounded line totals so rounding happens once, at the end.
+    // Sum unrounded values; round only for output.
     let total = new Prisma.Decimal(0);
     const rows = objects.map((object) => {
       const lineTotal = object.quantity.mul(object.unitPrice);

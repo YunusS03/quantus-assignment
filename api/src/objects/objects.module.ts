@@ -7,7 +7,6 @@ import { ObjectsService } from './objects.service.js';
   imports: [PrismaModule],
   controllers: [ObjectsController],
   providers: [ObjectsService],
-  // Exported so ArticlesModule can serve GET /articles/:id/objects.
   exports: [ObjectsService],
 })
 export class ObjectsModule {}

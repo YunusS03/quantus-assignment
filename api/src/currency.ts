@@ -1,7 +1,6 @@
 const CURRENCIES = ['EUR', 'USD'];
 
-// One currency for the whole app. It is read once when the app starts, so a typo
-// in CURRENCY stops the app right away instead of showing the wrong currency later.
+// Read once at startup, so a wrong CURRENCY stops the app instead of showing the wrong currency.
 function readCurrency(): string {
   const currency = process.env.CURRENCY ?? 'EUR';
   if (!CURRENCIES.includes(currency)) {

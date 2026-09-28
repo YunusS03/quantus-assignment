@@ -1,8 +1,7 @@
 import { IsEnum, IsInt, IsNotEmpty, IsNumber, IsString, Max, Min, ValidateIf } from 'class-validator';
 import { Unit } from '../../generated/prisma/client.js';
 
-// Same fields as CreateObjectDto except id: the drawing's UUID never changes.
-// ValidateIf skips the checks only when a field is missing; null is still rejected.
+// No id: the drawing's UUID never changes. ValidateIf rejects null, see UpdateArticleDto.
 export class UpdateObjectDto {
   @ValidateIf((_, value) => value !== undefined)
   @IsString()

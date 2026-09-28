@@ -13,7 +13,6 @@ export class CreateArticleDto {
   @IsString()
   description: string;
 
-  // Leave out or send null for a top-level article.
   @IsOptional()
   @IsInt()
   parentId?: number | null;
