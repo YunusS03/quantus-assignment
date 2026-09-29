@@ -18,6 +18,7 @@ The first build takes about two minutes. The API applies the database migrations
 |---|---|
 | Frontend | http://localhost:8080 |
 | API | http://localhost:3000 (try http://localhost:3000/summary) |
+| API docs (Swagger, try every endpoint in the browser) | http://localhost:3000/docs |
 
 In a second terminal, while the stack is running:
 
@@ -49,6 +50,8 @@ docker compose run --rm -v ./api/prisma:/app/prisma api npx prisma migrate dev -
 ```
 
 ## 2. API endpoints
+
+The same list, with every field and validation rule, is at http://localhost:3000/docs.
 
 | Method and path | What it does |
 |---|---|
@@ -148,6 +151,8 @@ erDiagram
   on your machine, so the project doesn't clash with a Postgres you already run.
 - **Tests:** pure-function tests for the calculations and the code rule, plus endpoint tests that run the real
   controllers and services with a fake database, set up exactly like production.
+- **Swagger docs generated from the code:** `@nestjs/swagger` with its compiler plugin reads the DTOs, so the
+  docs at `/docs` always match the real validation rules, without extra decorators on every field.
 - **Vitest instead of Jest:** Nest 12's generator ships Vitest and ES modules by default. Jest would need extra
   config for ES modules, and Vitest's `describe` / `it` / `expect` reads the same.
 - **Frontend:** Vue 3 with Vue Router and Tailwind CSS v4 (the colors are design tokens in `@theme`, and all
@@ -199,7 +204,8 @@ erDiagram
 - **Moving an article that has sub-articles,** renumbering the whole subtree in one step.
 - **Multiple currencies** with exchange rates, and VAT handling.
 - **Authentication and user roles.**
-- **API documentation** with OpenAPI / Swagger.
+- **Response shapes in the API docs:** `/docs` describes every request in detail, but not yet the JSON that
+  comes back.
 - **End-to-end tests** against a real database, and a CI pipeline that runs them on every push.
 - **Ids above 2,147,483,647** currently give a 500 instead of a 400.
 - **Mobile:** the wide tables scroll sideways on a phone; a card layout would read better there.
