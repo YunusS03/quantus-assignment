@@ -165,7 +165,7 @@ erDiagram
 - **The quantity is mocked:** it's stored on each object instead of being measured from the drawing, as the
   brief allows.
 - **One currency per bill of quantities:** set with `CURRENCY` (`EUR` by default, or `USD`) in `compose.yaml`.
-  Any other value stops the API at startup instead of showing the wrong currency. Prices exclude VAT.
+  Any other value stops the API at startup instead of showing the wrong currency. Prices exclude VAT (BTW).
 - **Every object belongs to exactly one article,** chosen when the object is created. Assigning objects through
   criteria rules is left out (see *Questions*).
 - **The article tree and the code must agree:** a child's code is its parent's code plus one group
@@ -185,11 +185,8 @@ erDiagram
   requires an article.
 - Can one object match the criteria of several articles? This project allows exactly one article per object.
 - How are criteria rules defined, and who maintains them: per project, or as a shared library?
-- Which drawing property gives the quantity for each unit (length, area, volume, weight, count), and who
-  decides it?
 - Do article codes always use two-digit groups, and can a project renumber its articles?
-- Is one currency per project enough, and should prices include VAT?
-- Which rich-text format do descriptions use today (HTML, Markdown, something else)?
+- Is one currency per project enough, and should prices include VAT (BTW)?
 
 ## 7. Future improvements
 
@@ -202,7 +199,7 @@ erDiagram
   sub-articles, but the list only shows the top-level subtotals from `/summary`.
 - **Editing and deleting in the frontend,** with a rich-text editor for descriptions (sanitized before display).
 - **Moving an article that has sub-articles,** renumbering the whole subtree in one step.
-- **Multiple currencies** with exchange rates, and VAT handling.
+- **Multiple currencies** with exchange rates, and VAT (BTW) handling.
 - **Authentication and user roles.**
 - **Response shapes in the API docs:** `/docs` describes every request in detail, but not yet the JSON that
   comes back.
